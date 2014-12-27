@@ -1,5 +1,5 @@
 var luck_star = "12211010";
-var WAIT = 10; //停止后空转多少圈
+var WAIT = 4; //停止后空转多少圈，一定得是偶数
 var Reel = function() {
     var radius = 300;
 
@@ -135,7 +135,7 @@ var start = function() {
     refresh();
     render();
     window.onkeydown = function (event) {
-        console.log(event.keyCode);
+        //console.log(event.keyCode);
         switch(event.keyCode) {
             case 13:
                 stop();
