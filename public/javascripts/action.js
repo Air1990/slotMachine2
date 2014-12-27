@@ -1,4 +1,3 @@
-var luck_star = "12211010";
 var WAIT = 4; //停止后空转多少圈，一定得是偶数
 var Reel = function() {
     var radius = 300;
@@ -74,7 +73,7 @@ var Reel = function() {
 };
 var reels = [];
 function refresh() {
-    reels.forEach(function(ele, index) {
+    reels.forEach(function (ele) {
         ele.obj.rotation.x = 0;
         ele.action = 1;
         ele.omiga = 0;         // current angle speed
@@ -84,9 +83,12 @@ function refresh() {
 }
 
 function run() {
+    var luckyStar = getLuckyStar();
+    var luckyName = luckyStar.name;
+    luckyStar = luckyStar.id;
     reels.forEach(function (ele, index) {
         setTimeout(function () {
-            ele.target = parseInt(luck_star[index]);
+            ele.target = parseInt(luckyStar[index]);
             ele.run();
         },250*index);
     })
