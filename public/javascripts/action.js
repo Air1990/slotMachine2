@@ -1,4 +1,4 @@
-var WAIT = 4; //停止后空转多少圈，一定得是偶数
+var WAIT = 10; //停止后空转多少圈，一定得是偶数
 var Reel = function() {
     var radius = 300;
 
@@ -7,7 +7,7 @@ var Reel = function() {
     this.target = 0;   // the target number to stop at
 
     this.OMIGA = 0.20;      // max angle speed
-    this.omiga = 0;         // current angle speed
+    this.omiga = 0.001;         // current angle speed
     this.beta  = 0;    // angle speed's speed when speed up
     this.beta2 = 0;    // angle speed's speed when speed down
 
@@ -22,13 +22,51 @@ var Reel = function() {
         div.appendChild(span);
 
         var digit = new THREE.CSS3DObject(div);
-        var r = Math.PI * i / 5;
-        digit.position.x = 0;
-        digit.position.y = radius * Math.sin(r);
-        digit.position.z = radius * Math.cos(r);
-        digit.rotation.x = -r;
 
+
+
+        // 开头位置缓动效果初始位置
+        digit.position.x = 4000 * Math.random() - 2000;
+        digit.position.y = 4000 * Math.random() - 2000;
+        digit.position.z = 4000 * Math.random() - 2000;
+        //new TWEEN.Tween(digit.position)
+        //    .to({x: 0, y: radius * Math.sin(r), z: radius * Math.cos(r)},
+        //    2000+4000*Math.random())
+        //    .easing(TWEEN.Easing.Exponential.InOut)
+        //    .start();
+
+        // 开头角度缓动初始化
+        digit.rotation.x = 8 * Math.random() - 4;
+        digit.rotation.y = 8 * Math.random() - 4;
+        digit.rotation.z = 8 * Math.random() - 4;
+        //new TWEEN.Tween(digit.rotation)
+        //    .to({x: -r, y: 0, z: 0},
+        //    2000+4000*Math.random())
+        //    .easing(TWEEN.Easing.Exponential.InOut)
+        //    .start();
+
+        // 添加数字卡片至元件
         this.obj.add(digit);
+    }
+
+    this.build = function() {
+        this.omiga = 0;
+        this.obj.children.forEach(function (digit, index) {
+            // 当前数字卡片的角度（10个数字均分360°）
+            var r = Math.PI * index / 5;
+            // 开头位置缓动效果
+            new TWEEN.Tween(digit.position)
+                .to({x: 0, y: radius * Math.sin(r), z: radius * Math.cos(r)},
+                2000+4000*Math.random())
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            // 开头角度缓动效果
+            new TWEEN.Tween(digit.rotation)
+                .to({x: -r, y: 0, z: 0},
+                2000+4000*Math.random())
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+        })
     }
 
     this.update = function() {
@@ -74,11 +112,17 @@ var Reel = function() {
 var reels = [];
 function refresh() {
     reels.forEach(function (ele) {
-        ele.obj.rotation.x = 0;
         ele.action = 1;
         ele.omiga = 0;         // current angle speed
         ele.beta  = 0;    // angle speed's speed when speed up
         ele.beta2 = 0;    // angle speed's speed when speed down
+        ele.obj.rotation.x =
+            (ele.obj.rotation.x % (2 * Math.PI) + Math.PI + Math.PI) % (2 * Math.PI);
+        new TWEEN.Tween(ele.obj.rotation)
+            .to({x:0}, 1000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+        //ele.obj.rotation.x = 0;
     });
 }
 
@@ -100,6 +144,12 @@ function stop() {
             ele.stop();
         },2000*index);
     });
+}
+
+function build() {
+    reels.forEach(function (ele) {
+        ele.build();
+    })
 }
 
 var start = function() {
@@ -132,21 +182,25 @@ var start = function() {
         for (var i = 0; i < 8; ++i) {
             reels[i].update();
         }
+        TWEEN.update();
         renderer.render(scene, camera);
     };
-    refresh();
+    //refresh();
     render();
     window.onkeydown = function (event) {
-        //console.log(event.keyCode);
+        console.log(event.keyCode);
         switch(event.keyCode) {
-            case 13:
+            case 13: //回车键
                 stop();
                 break;
-            case 32:
+            case 32: //空格键
                 refresh();
                 break;
-            case 82:
+            case 82: //R键
                 run();
+                break;
+            case 66: //B键
+                build();
                 break;
         }
     };
