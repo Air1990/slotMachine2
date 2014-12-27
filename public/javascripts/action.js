@@ -5,7 +5,7 @@ var board = function() {
     var board = new THREE.CSS3DObject(div);
     board.position.z = -500;
     return board;
-}
+};
 var Reel = function() {
     var radius = 300;
 
@@ -132,6 +132,23 @@ var Reel = function() {
         action = 0;
     };
 
+    this.vibration = function () {
+        var count = 0;
+        var limit = 10; //one second
+        var maxDelta = Math.PI/180*5; //上下动5度
+        var dist1 = function(x) {return maxDelta-(maxDelta/limit)*x;};
+        var dist2 = function(x) {return Math.sin(x);};
+        var target = this.target;
+        var x = this.obj;
+        var interval_ID = setInterval(function () {
+            x.rotation.x = target * Math.PI / 5+dist1(count)*dist2(count);
+            ++count;
+            if(count == limit) {
+                clearInterval(interval_ID);
+            }
+        }, 20);
+    };
+
     this.stop = function() {
         var phi = this.target * Math.PI / 5;
         this.beta2 = (this.omiga * this.omiga) /
@@ -139,6 +156,14 @@ var Reel = function() {
         console.log(this.beta2);
         action = 1;
     };
+    this.stopForce = function () {
+        this.obj.rotation.x = this.target * (Math.PI/5);
+        this.omiga = 0;
+        this.beta = 0;
+        this.beta2 = 0;
+        action = 1;
+        this.vibration();
+    }
 };
 var reels = [];
 function refresh() {
@@ -165,16 +190,43 @@ function run() {
     })
 }
 
-function stop() {
+function stop(keyCode) {
     var luckyStar = getLuckyStar();
     var luckyName = luckyStar.name;
     luckyStar = luckyStar.id;
-    reels.forEach(function(ele, index) {
-        setTimeout(function () {
-            ele.target = parseInt(luckyStar[index]);
-            ele.stop();
-        },1500*index);
-    });
+    switch(keyCode) {
+        case 13:
+            reels.forEach(function (ele, index) {
+                    setTimeout(function () {
+                        ele.target = parseInt(luckyStar[index]);
+                        ele.stop();
+                    }, 1500 * index);
+                });
+            break;
+        case 83:
+            reels.forEach(function (ele, index) {
+                setTimeout(function () {
+                    ele.target = parseInt(luckyStar[index]);
+                    ele.stopForce();
+                }, 500 * index);
+            });
+            break;
+        case 85:
+            var order = [0,1,2,3,4,5,6,7];
+            for(var i = 7 ; i > 0 ; --i) {
+                var j = parseInt(Math.random()*i);
+                var k = order[i];
+                order[i] = order[j];
+                order[j] = k;
+            }
+            reels.forEach(function (ele, index) {
+                setTimeout(function () {
+                    ele.target = parseInt(luckyStar[index]);
+                    ele.stop();
+                }, 1500 * order[index]);
+            });
+            break;
+    }
 }
 
 function build() {
@@ -229,8 +281,14 @@ var start = function() {
     window.onkeydown = function (event) {
         console.log(event.keyCode);
         switch(event.keyCode) {
-            case 13: //回车键
-                stop();
+            case 83://S键
+            case 85://U键
+            case 13://回车
+                stop(event.keyCode);
+                break;
+            case 68:
+                localStorage = "{}";
+                alert("重置成功");
                 break;
             case 32: //空格键
                 refresh();
