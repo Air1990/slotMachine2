@@ -128,3 +128,23 @@ canvas {
 #log {
     color: red;
 }
+
+.name {
+    width: 480px;
+    height: 160px;
+    box-shadow: 0px 0px 12px rgba(0,255,255,0.85);
+    border: 1px solid rgba(127,255,255,0.65);
+    background-color: rgba(0,127,127, 0.65);
+    text-align: center;
+    display: table;
+}
+
+.name span {
+    display: table-cell;
+    vertical-align: middle;
+    font-family: Slackey, 'WenQuanYi Micro Hei';
+    font-size: 148px;
+    font-weight: bold;
+    color: rgba(0,255,255,0.75);
+    text-shadow: 0 0 10px rgba(0,255,255,0.95);
+}

@@ -1,4 +1,5 @@
 var WAIT = 10; //停止后空转多少圈，一定得是偶数
+var NAME;
 var board = function() {
     var div = document.createElement('div');
     div.className = "board";
@@ -6,6 +7,22 @@ var board = function() {
     board.position.z = -500;
     return board;
 };
+var luckyName = function() {
+
+    // name
+    var div = document.createElement('div');
+    div.className = 'name';
+
+    NAME = document.createElement('span');
+    div.appendChild(NAME);
+
+    var name = new THREE.CSS3DObject(div);
+
+    name.position.z = 1700;
+    name.rotation.y = Math.PI;
+    return name;
+
+}
 var Reel = function() {
     var radius = 300;
 
@@ -155,6 +172,7 @@ var Reel = function() {
         (2 * WAIT * Math.PI + 2 * (phi - (this.obj.rotation.x+0.11) % (2 * Math.PI)));
         console.log(this.beta2);
         action = 1;
+        if(this.onStopped)this.onStopped();
     };
     this.stopForce = function () {
         this.obj.rotation.x = this.target * (Math.PI/5);
@@ -163,6 +181,7 @@ var Reel = function() {
         this.beta2 = 0;
         action = 1;
         this.vibration();
+        if(this.onStopped)this.onStopped();
     }
 };
 var reels = [];
@@ -192,7 +211,7 @@ function run() {
 
 function stop(keyCode) {
     var luckyStar = getLuckyStar();
-    var luckyName = luckyStar.name;
+    NAME.textContent = luckyStar.name;
     luckyStar = luckyStar.id;
     switch(keyCode) {
         case 13:
@@ -254,6 +273,15 @@ var start = function() {
         reels.push(reel);
     }
     scene.add(board());
+    scene.add(luckyName());
+    reels[7].onStopped = function() {
+        setTimeout(function() {
+            new TWEEN.Tween(camera.rotation)
+                .to({y: Math.PI}, 1000)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+        }, 500);
+    };
     var renderer = new THREE.CSS3DRenderer({
         antialias: true
     });
@@ -301,6 +329,13 @@ var start = function() {
                 break;
             case 69: //E键
                 free();
+                break;
+            case 67: //C键
+                camera.rotation.y = - Math.PI;
+                new TWEEN.Tween(camera.rotation)
+                    .to({y: 0}, 1000)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
                 break;
         }
     };
