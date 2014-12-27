@@ -1,5 +1,5 @@
 var WAIT = 10; //停止后空转多少圈，一定得是偶数
-var NAME;
+var NAME;      //中奖的名字是全局变量
 var board = function() {
     var div = document.createElement('div');
     div.className = "board";
@@ -7,6 +7,7 @@ var board = function() {
     board.position.z = -500;
     return board;
 };
+var CAMERA;    //全局照相机
 var luckyName = function() {
 
     // name
@@ -22,20 +23,17 @@ var luckyName = function() {
     name.rotation.y = Math.PI;
     return name;
 
-}
+};
 var Reel = function() {
     var radius = 300;
 
     this.obj = new THREE.Object3D();
 
-    this.target = 0;   // the target number to stop at
+    this.target = 0;   // 应当停下的位置
 
-    this.OMIGA = 0.20;      // max angle speed
-    this.omiga = 0.001;         // current angle speed
-    this.beta  = 0;    // angle speed's speed when speed up
-    this.beta2 = 0;    // angle speed's speed when speed down
-
-    var action = 0;        // 0 -- running; 1 -- stop
+    this.OMIGA = 0.20;      // 最高速
+    this.omiga = 0.001;         // 角速度
+    this.beta  = 0;    // 角加速度
 
     for (var i = 0; i < 10; ++i) {
         var div = document.createElement('div');
@@ -47,31 +45,23 @@ var Reel = function() {
 
         var digit = new THREE.CSS3DObject(div);
 
-
-
         // 开头位置缓动效果初始位置
         digit.position.x = 2000 * Math.random() - 1000;
         digit.position.y = 2000 * Math.random() - 1000;
         digit.position.z = 2000 * Math.random() - 1000;
-        //new TWEEN.Tween(digit.position)
-        //    .to({x: 0, y: radius * Math.sin(r), z: radius * Math.cos(r)},
-        //    2000+4000*Math.random())
-        //    .easing(TWEEN.Easing.Exponential.InOut)
-        //    .start();
 
         // 开头角度缓动初始化
         digit.rotation.x = 8 * Math.random() - 4;
         digit.rotation.y = 8 * Math.random() - 4;
         digit.rotation.z = 8 * Math.random() - 4;
-        //new TWEEN.Tween(digit.rotation)
-        //    .to({x: -r, y: 0, z: 0},
-        //    2000+4000*Math.random())
-        //    .easing(TWEEN.Easing.Exponential.InOut)
-        //    .start();
 
         // 添加数字卡片至元件
         this.obj.add(digit);
     }
+
+    this.running = function () { //是不是在运行
+        return this.omiga != 0;
+    };
 
     this.build = function() {
         this.omiga = 0;
@@ -95,7 +85,7 @@ var Reel = function() {
 
     this.free = function () {
         this.obj.children.forEach(function (digit) {
-            // 结束位置缓动效果
+            // 补间动画 位置
             new TWEEN.Tween(digit.position)
                 .to({
                     x: 2000 * Math.random() - 1000,
@@ -104,7 +94,7 @@ var Reel = function() {
                 }, 2000+4000*Math.random())
                 .easing(TWEEN.Easing.Exponential.Out)
                 .start();
-            // 结束角度缓动效果
+            // 补间动画 角度
             new TWEEN.Tween(digit.rotation)
                 .to({
                     x: 8 * Math.random() - 4,
@@ -118,6 +108,31 @@ var Reel = function() {
     };
 
     this.update = function() {
+        if(this.omiga + this.beta > this.OMIGA) {
+            this.omiga = this.OMIGA;
+            if(this.onMaxSpeed) {
+                this.onMaxSpeed();
+                this.onMaxSpeed = undefined;
+            }
+        }
+        else
+        if(this.running() && (this.omiga + this.beta) * this.omiga <= 0) {
+            this.omiga = 0;
+            this.beta = 0;
+            if(this.onStopped) {
+                this.onStopped();
+                this.onStopped = undefined;
+            }
+        }
+        else {
+            if(!this.running()) {
+                if(this.onStart) {
+                    this.onStart();
+                    this.onStart = undefined;
+                }
+            }
+            this.omiga += this.beta;
+        }
         var alpha = 0;
         this.obj.rotation.x += this.omiga;
         var r = this.obj.rotation.x;
@@ -126,27 +141,12 @@ var Reel = function() {
             this.obj.children[i].element.style.opacity = alpha.toString();
             this.obj.children[i].element.style.filter = 'alpha(opacity='+(alpha*100).toString()+')';
         }
-        if (action == 0) {
-            if (this.omiga < this.OMIGA) {
-                this.omiga += this.beta;
-            }
-            if(this.omiga > this.OMIGA) {
-                this.omiga = this.OMIGA;
-            }
-        } else if (action == 1) {
-            if (this.omiga > 0) {
-                this.omiga -= this.beta2;
-                if(this.omiga < 0) this.omiga = 0;
-            }
-        }
     };
 
     this.run = function () {
-        this.OMIGA = 0.20;      // max angle speed
-        this.omiga = -0.008;         // current angle speed
-        this.beta  = 0.0025;    // angle speed's speed when speed up
-        this.beta2 = 0.0015;    // angle speed's speed when speed down
-        action = 0;
+        this.OMIGA = 0.20;
+        this.omiga = 0;
+        this.beta  = 0.0025;
     };
 
     this.vibration = function () {
@@ -168,29 +168,25 @@ var Reel = function() {
 
     this.stop = function() {
         var phi = this.target * Math.PI / 5;
-        this.beta2 = (this.omiga * this.omiga) /
-        (2 * WAIT * Math.PI + 2 * (phi - (this.obj.rotation.x+0.11) % (2 * Math.PI)));
-        console.log(this.beta2);
-        action = 1;
-        if(this.onStopped)this.onStopped();
+        this.beta = - (this.omiga * this.omiga) /
+        (2 * WAIT * Math.PI + 2 * (phi - (this.obj.rotation.x-0.11) % (2 * Math.PI)));
     };
     this.stopForce = function () {
         this.obj.rotation.x = this.target * (Math.PI/5);
         this.omiga = 0;
         this.beta = 0;
-        this.beta2 = 0;
-        action = 1;
         this.vibration();
-        if(this.onStopped)this.onStopped();
+        if (this.onStopped) {
+            this.onStopped();
+            this.onStopped = undefined;
+        }
     }
 };
 var reels = [];
 function refresh() {
     reels.forEach(function (ele) {
-        ele.action = 1;
-        ele.omiga = 0;         // current angle speed
-        ele.beta  = 0;    // angle speed's speed when speed up
-        ele.beta2 = 0;    // angle speed's speed when speed down
+        ele.omiga = 0;
+        ele.beta  = 0;
         ele.obj.rotation.x =
             (ele.obj.rotation.x % (2 * Math.PI) + Math.PI + Math.PI) % (2 * Math.PI);
         new TWEEN.Tween(ele.obj.rotation)
@@ -209,29 +205,48 @@ function run() {
     })
 }
 
+function turnAround() {
+    setTimeout(function() {
+        new TWEEN.Tween(CAMERA.rotation)
+            .to({y: Math.PI}, 1000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+    }, 500);
+}
+
 function stop(keyCode) {
     var luckyStar = getLuckyStar();
     NAME.textContent = luckyStar.name;
     luckyStar = luckyStar.id;
+    var order;
     switch(keyCode) {
         case 13:
+            order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
-                    setTimeout(function () {
-                        ele.target = parseInt(luckyStar[index]);
-                        ele.stop();
-                    }, 1500 * index);
-                });
+                if(order[index] == 7) {
+                    ele.onStopped = turnAround;
+                }
+                setTimeout(function () {
+                    ele.target = parseInt(luckyStar[index]);
+                    ele.stop();
+                }, 1500 * order[index]);
+            });
             break;
         case 83:
+            order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
+                if(order[index] == 7) {
+                    console.log(index);
+                    ele.onStopped = turnAround;
+                }
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
                     ele.stopForce();
-                }, 500 * index);
+                }, 500 * order[index]);
             });
             break;
         case 85:
-            var order = [0,1,2,3,4,5,6,7];
+            order = [0,1,2,3,4,5,6,7];
             for(var i = 7 ; i > 0 ; --i) {
                 var j = parseInt(Math.random()*i);
                 var k = order[i];
@@ -239,6 +254,9 @@ function stop(keyCode) {
                 order[j] = k;
             }
             reels.forEach(function (ele, index) {
+                if(order[index] == 7) {
+                    ele.onStopped = turnAround;
+                }
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
                     ele.stop();
@@ -274,14 +292,6 @@ var start = function() {
     }
     scene.add(board());
     scene.add(luckyName());
-    reels[7].onStopped = function() {
-        setTimeout(function() {
-            new TWEEN.Tween(camera.rotation)
-                .to({y: Math.PI}, 1000)
-                .easing(TWEEN.Easing.Exponential.InOut)
-                .start();
-        }, 500);
-    };
     var renderer = new THREE.CSS3DRenderer({
         antialias: true
     });
@@ -295,6 +305,7 @@ var start = function() {
         window.innerWidth / window.innerHeight,
         0.1, 1000
     );
+    CAMERA = camera;
     camera.position.z = 1000;
     var render = function() {
         requestAnimationFrame(render);
