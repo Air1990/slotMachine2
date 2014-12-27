@@ -5,7 +5,7 @@ var Reel = function(t) {
 
     this.target = t || 0;   // the target number to stop at
 
-    this.Omiga = 0.20;      // max angle speed
+    this.OMIGA = 0.20;      // max angle speed
     this.omiga = 0;         // current angle speed
     this.beta  = 0.0005;    // angle speed's speed when speed up
     this.beta2 = 0.0005;    // angle speed's speed when speed down
@@ -40,12 +40,16 @@ var Reel = function(t) {
             this.obj.children[i].element.style.filter = 'alpha(opacity='+(alpha*100).toString()+')';
         }
         if (action == 0) {
-            if (this.omiga < this.Omiga) {
+            if (this.omiga < this.OMIGA) {
                 this.omiga += this.beta;
+            }
+            if(this.omiga > this.OMIGA) {
+                this.omiga = this.OMIGA;
             }
         } else if (action == 1) {
             if (this.omiga > 0) {
                 this.omiga -= this.beta2;
+                if(this.omiga < 0) this.omiga = 0;
             }
         }
     };
