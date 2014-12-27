@@ -287,7 +287,7 @@ var start = function() {
                 stop(event.keyCode);
                 break;
             case 68:
-                localStorage = "{}";
+                localStorage.unlucky = "{}";
                 alert("重置成功");
                 break;
             case 32: //空格键
