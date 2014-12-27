@@ -69,6 +69,30 @@ var Reel = function() {
         })
     };
 
+    this.free = function () {
+        this.obj.children.forEach(function (digit) {
+            // 结束位置缓动效果
+            new TWEEN.Tween(digit.position)
+                .to({
+                    x: 2000 * Math.random() - 1000,
+                    y: 2000 * Math.random() - 1000,
+                    z: 2000 * Math.random() - 1000
+                }, 2000+4000*Math.random())
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            // 结束角度缓动效果
+            new TWEEN.Tween(digit.rotation)
+                .to({
+                    x: 8 * Math.random() - 4,
+                    y: 8 * Math.random() - 4,
+                    z: 8 * Math.random() - 4
+                }, 2000+4000*Math.random())
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+        });
+        this.omiga = 0.001;
+    };
+
     this.update = function() {
         var alpha = 0;
         this.obj.rotation.x += this.omiga;
@@ -147,9 +171,17 @@ function stop() {
 }
 
 function build() {
+    TWEEN.removeAll();
     reels.forEach(function (ele) {
         ele.build();
-    })
+    });
+}
+
+function free() {
+    TWEEN.removeAll();
+    reels.forEach(function (ele) {
+        ele.free();
+    });
 }
 
 var start = function() {
@@ -201,6 +233,9 @@ var start = function() {
                 break;
             case 66: //B键
                 build();
+                break;
+            case 69: //E键
+                free();
                 break;
         }
     };
