@@ -7,8 +7,8 @@ var Reel = function(t) {
 
     this.OMIGA = 0.20;      // max angle speed
     this.omiga = 0;         // current angle speed
-    this.beta  = 0.0005;    // angle speed's speed when speed up
-    this.beta2 = 0.0005;    // angle speed's speed when speed down
+    this.beta  = 0.0025;    // angle speed's speed when speed up
+    this.beta2 = 0.0015;    // angle speed's speed when speed down
 
     var action = 0;        // 0 -- running; 1 -- stop
 
@@ -61,20 +61,14 @@ var Reel = function(t) {
     this.stop = function() {
         var phi = this.target * Math.PI / 5;
         this.beta2 = (this.omiga * this.omiga) /
-        (40 * Math.PI + 2 * (phi - this.obj.rotation.x) % (2 * Math.PI));
+        (40 * Math.PI + 2 * (phi - this.obj.rotation.x % (2 * Math.PI)));
         console.log(this.beta2);
         action = 1;
     };
-
-    this.isRunning = function() {
-        return action == 0;
-    };
 };
-
+var reels = [];
 var start = function() {
     var scene = new THREE.Scene();
-
-    var reels = [];
     for (var i = 0; i < 8; ++i) {
         var reel = new Reel(i);
         reel.obj.position.x = 140 * i - 490;
@@ -97,10 +91,7 @@ var start = function() {
         window.innerWidth / window.innerHeight,
         0.1, 1000
     );
-    camera.position.z = 1200;
-
-    //var v = [.010, .015, .020, .025, .030, .035, .040, .045];
-    var v = [.015, .015, .015, .015, .015, .015, .015, .015];
+    camera.position.z = 1000;
     var render = function() {
         requestAnimationFrame(render);
 
@@ -120,7 +111,7 @@ var start = function() {
                 console.log(index);
                 setTimeout(function () {
                     ele.stop();
-                },1000*index);
+                },2000*index);
             });
         }
     };
