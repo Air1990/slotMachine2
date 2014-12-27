@@ -78,7 +78,7 @@ var Reel = function() {
                     y: 2000 * Math.random() - 1000,
                     z: 2000 * Math.random() - 1000
                 }, 2000+4000*Math.random())
-                .easing(TWEEN.Easing.Exponential.InOut)
+                .easing(TWEEN.Easing.Exponential.Out)
                 .start();
             // 结束角度缓动效果
             new TWEEN.Tween(digit.rotation)
@@ -87,7 +87,7 @@ var Reel = function() {
                     y: 8 * Math.random() - 4,
                     z: 8 * Math.random() - 4
                 }, 2000+4000*Math.random())
-                .easing(TWEEN.Easing.Exponential.InOut)
+                .easing(TWEEN.Easing.Exponential.Out)
                 .start();
         });
         this.omiga = 0.001;
