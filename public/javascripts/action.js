@@ -42,8 +42,6 @@ window.onload = function() {
         var reel = createReel();
         reel.position.x = 140 * i - 490;
         reel.rotation.x = 0;
-        reel.mesh
-        
         scene.add(reel);
         reels.push(reel);
     }
@@ -70,30 +68,10 @@ window.onload = function() {
 
     var render = function() {
         requestAnimationFrame(render);
-        scene.updateMatrixWorld();
-
-        reels[0].rotation.x += 0.010;
-        reels[1].rotation.x += 0.013;
-        reels[2].rotation.x += 0.016;
-        reels[3].rotation.x += 0.019;
-        reels[4].rotation.x += 0.022;
-        reels[5].rotation.x += 0.025;
-        reels[6].rotation.x += 0.028;
-        reels[7].rotation.x += 0.031;
-        
-        //var vector = new THREE.Vector3();
-        //vector.setFromMatrixPosition(reels[0].children[0].matrixWorld);
-        reels[0].renew();
-        reels[1].renew();
-        reels[2].renew();
-        reels[3].renew();
-        reels[4].renew();
-        reels[5].renew();
-        reels[6].renew();
-        reels[7].renew();
-        
-        document.getElementById('log').innerHTML = Math.round(reels[7].rotation.x).toString();
-
+        for(var i in reels) {
+            reels[i].rotation.x += 0.010;//+0.003*i;
+            reels[i].renew();
+        }
         renderer.render(scene, camera);
     };
 
