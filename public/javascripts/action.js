@@ -1,14 +1,16 @@
-var Reel = function(t) {
+var luck_star = "12211010";
+var WAIT = 10; //停止后空转多少圈
+var Reel = function() {
     var radius = 300;
 
     this.obj = new THREE.Object3D();
 
-    this.target = t || 0;   // the target number to stop at
+    this.target = 0;   // the target number to stop at
 
     this.OMIGA = 0.20;      // max angle speed
     this.omiga = 0;         // current angle speed
-    this.beta  = 0.0025;    // angle speed's speed when speed up
-    this.beta2 = 0.0015;    // angle speed's speed when speed down
+    this.beta  = 0;    // angle speed's speed when speed up
+    this.beta2 = 0;    // angle speed's speed when speed down
 
     var action = 0;        // 0 -- running; 1 -- stop
 
@@ -55,22 +57,53 @@ var Reel = function(t) {
     };
 
     this.run = function () {
+        this.OMIGA = 0.20;      // max angle speed
+        this.omiga = -0.008;         // current angle speed
+        this.beta  = 0.0025;    // angle speed's speed when speed up
+        this.beta2 = 0.0015;    // angle speed's speed when speed down
         action = 0;
     };
 
     this.stop = function() {
         var phi = this.target * Math.PI / 5;
         this.beta2 = (this.omiga * this.omiga) /
-        (40 * Math.PI + 2 * (phi - this.obj.rotation.x % (2 * Math.PI)));
+        (2 * WAIT * Math.PI + 2 * (phi - (this.obj.rotation.x+0.11) % (2 * Math.PI)));
         console.log(this.beta2);
         action = 1;
     };
 };
 var reels = [];
+function refresh() {
+    reels.forEach(function(ele, index) {
+        ele.obj.rotation.x = 0;
+        ele.action = 1;
+        ele.omiga = 0;         // current angle speed
+        ele.beta  = 0;    // angle speed's speed when speed up
+        ele.beta2 = 0;    // angle speed's speed when speed down
+    });
+}
+
+function run() {
+    reels.forEach(function (ele, index) {
+        setTimeout(function () {
+            ele.target = parseInt(luck_star[index]);
+            ele.run();
+        },250*index);
+    })
+}
+
+function stop() {
+    reels.forEach(function(ele, index) {
+        setTimeout(function () {
+            ele.stop();
+        },2000*index);
+    });
+}
+
 var start = function() {
     var scene = new THREE.Scene();
     for (var i = 0; i < 8; ++i) {
-        var reel = new Reel(i);
+        var reel = new Reel();
         reel.obj.position.x = 140 * i - 490;
         reel.obj.rotation.x = 0;
 
@@ -94,37 +127,27 @@ var start = function() {
     camera.position.z = 1000;
     var render = function() {
         requestAnimationFrame(render);
-
         for (var i = 0; i < 8; ++i) {
             reels[i].update();
         }
-
-        //document.getElementById('log').innerHTML = Math.round(reels[7].rotation.x).toString();
-
         renderer.render(scene, camera);
     };
-
+    refresh();
     render();
     window.onkeydown = function (event) {
-        if(event.keyCode = 13) {
-            reels.forEach(function(ele, index) {
-                console.log(index);
-                setTimeout(function () {
-                    ele.stop();
-                },2000*index);
-            });
+        console.log(event.keyCode);
+        switch(event.keyCode) {
+            case 13:
+                stop();
+                break;
+            case 32:
+                refresh();
+                break;
+            case 82:
+                run();
+                break;
         }
     };
-    //window.addEventListener('keydown', function() {
-    //    for (var i = 0; i < 8; ++i) {
-    //        //reels[i].action = 1^reels[i].action;
-    //        //if (reels[i].isRunning()) {
-    //        reels[i].stop();
-    //        //} else {
-    //        //    reels[i].run();
-    //        //}
-    //    }
-    //});
 
     window.addEventListener('resize', function() {
         renderer.setSize(window.innerWidth, window.innerHeight);
