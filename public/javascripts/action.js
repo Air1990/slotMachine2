@@ -26,9 +26,9 @@ var Reel = function() {
 
 
         // 开头位置缓动效果初始位置
-        digit.position.x = 4000 * Math.random() - 2000;
-        digit.position.y = 4000 * Math.random() - 2000;
-        digit.position.z = 4000 * Math.random() - 2000;
+        digit.position.x = 2000 * Math.random() - 1000;
+        digit.position.y = 2000 * Math.random() - 1000;
+        digit.position.z = 2000 * Math.random() - 1000;
         //new TWEEN.Tween(digit.position)
         //    .to({x: 0, y: radius * Math.sin(r), z: radius * Math.cos(r)},
         //    2000+4000*Math.random())
@@ -67,7 +67,7 @@ var Reel = function() {
                 .easing(TWEEN.Easing.Exponential.InOut)
                 .start();
         })
-    }
+    };
 
     this.update = function() {
         var alpha = 0;
@@ -127,22 +127,22 @@ function refresh() {
 }
 
 function run() {
-    var luckyStar = getLuckyStar();
-    var luckyName = luckyStar.name;
-    luckyStar = luckyStar.id;
     reels.forEach(function (ele, index) {
         setTimeout(function () {
-            ele.target = parseInt(luckyStar[index]);
             ele.run();
         },250*index);
     })
 }
 
 function stop() {
+    var luckyStar = getLuckyStar();
+    var luckyName = luckyStar.name;
+    luckyStar = luckyStar.id;
     reels.forEach(function(ele, index) {
         setTimeout(function () {
+            ele.target = parseInt(luckyStar[index]);
             ele.stop();
-        },2000*index);
+        },1500*index);
     });
 }
 
