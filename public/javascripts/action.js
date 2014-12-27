@@ -1,4 +1,11 @@
 var WAIT = 10; //停止后空转多少圈，一定得是偶数
+var board = function() {
+    var div = document.createElement('div');
+    div.className = "board";
+    var board = new THREE.CSS3DObject(div);
+    board.position.z = -500;
+    return board;
+}
 var Reel = function() {
     var radius = 300;
 
@@ -194,7 +201,7 @@ var start = function() {
         scene.add(reel.obj);
         reels.push(reel);
     }
-
+    scene.add(board());
     var renderer = new THREE.CSS3DRenderer({
         antialias: true
     });
