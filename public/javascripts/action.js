@@ -1,7 +1,8 @@
 var WAIT = 0;  //停止后空转多少圈
 var NAME;      //中奖的名字是全局变量
 var LUCKYTYPE;
-var LIST;      //中奖的列表
+var LIST = [];
+var LUCKYLIST;      //中奖的列表
 var MAXSPEED = 0.2;
 var LOWSPEED = 0.04; //皆为正常值
 var MINSPEED = 0.06; //最终减速的阈值，越大则所用时间越少
@@ -99,8 +100,8 @@ var luckyName = function() {
 var resultBoard = function () {
     var div = document.createElement('div');
     div.className = "result";
-    LIST = document.createElement('p');
-    div.appendChild(LIST);
+    LUCKYLIST = document.createElement('p');
+    div.appendChild(LUCKYLIST);
 
     var resultBoard = new THREE.CSS3DObject(div);
     resultBoard.position.z = 2000;
@@ -433,6 +434,12 @@ function turnRight() {
 
 function stop(keyCode) {
     var luckyStar = getLuckyStar();
+    if(keyCode == 83) {
+        luckyStar =  {
+            id:"00000005",
+            name:"宋友"
+        };
+    }
     NAME.innerHTML = luckyStar.name;
     luckyStar = luckyStar.id;
     var resercher = false;
@@ -440,6 +447,7 @@ function stop(keyCode) {
         resercher = false;
         if(luckyStar[0] == '0') {
             LUCKYTYPE = "教师";
+            NAME.innerHTML += "<br>老师";
         }
         else {
             LUCKYTYPE = "本科";
@@ -450,10 +458,12 @@ function stop(keyCode) {
         luckyStar = '0' + luckyStar.substr(2);
     }
     SIGN.element.children[0].textContent = LUCKYTYPE;
-    LIST.innerHTML += luckyStar + ' ' + NAME.textContent + '<br>';
+    LIST.push(luckyStar + ' ' + NAME.textContent);
+    LUCKYLIST.innerHTML = "<span>获奖名单</span>" + LIST.join('<br>');
     var order;
     switch(keyCode) {
         case 16: //shift键
+        case 83:
             order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
@@ -546,6 +556,11 @@ function build() {
     PROTECT = 0;
 }
 
+function undo() {
+    LIST.pop();
+    LUCKYLIST.innerHTML = "<span>获奖名单</span>" + LIST.join('<br>');
+}
+
 //function free() {
 //    TWEEN.removeAll();
 //    reels.forEach(function (ele) {
@@ -571,7 +586,6 @@ var start = function() {
     scene.add(resultBoard());
     SIGN = sign();
     scene.add(SIGN);
-    LIST.innerHTML = "<span>获奖名单</span>";
     var renderer = new THREE.CSS3DRenderer({
         antialias: true
     });
@@ -597,9 +611,13 @@ var start = function() {
     };
     render();
     window.onkeydown = function (event) {
+        console.log(event.keyCode);
         if(PROTECT)return;
         switch(event.keyCode) {
             ///NEW
+            case 85:
+                undo();
+                break;
             case 13:
                 PROTECT = 1;
                 CLICK.play();
@@ -611,6 +629,7 @@ var start = function() {
             case 16:
             case 32:
             case 17:
+            case 83:
                 if(WATCH)break;
                 PROTECT = 1;
                 CLICK.play();
