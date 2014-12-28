@@ -275,7 +275,9 @@ function turnForward() {
                 .to({z: 1000}, 1000)
                 .easing(TWEEN.Easing.Exponential.InOut)
                 .start();
-            setTimeout(refresh,1000);
+            setTimeout(function () {
+                PROTECT = 0;
+            },1000);
         }, 1500);
 }
 
