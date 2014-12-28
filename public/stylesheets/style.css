@@ -142,11 +142,11 @@ canvas {
 .name span {
     display: table-cell;
     vertical-align: middle;
-    font-family: Slackey, 'WenQuanYi Micro Hei';
+    font-family: 'Microsoft YaHei';
     font-size: 148px;
     font-weight: bold;
-    color: rgba(0,255,255,0.75);
-    text-shadow: 0 0 10px rgba(0,255,255,0.95);
+    color: rgba(197, 255, 253, 0.75);
+    text-shadow: 0 0 10px rgba(229, 255, 167, 0.95);
 }
 
 .result {
@@ -160,9 +160,44 @@ canvas {
 }
 
 .result p {
+    position: relative;
     display: table-cell;
     vertical-align: middle;
-    font-family: Slackey, 'WenQuanYi Micro Hei';
+    font-family: 'Microsoft YaHei';
+    font-size: 60px;
+    font-weight: bold;
+    color: rgba(197, 255, 253, 0.75);
+    text-shadow: 0 0 10px rgba(229, 255, 167, 0.95);
+}
+
+.result span {
+    position: absolute;
+    top : 20px;
+    display: table-cell;
+    vertical-align: middle;
+    font-weight: bold;
+    font-family: 'SimHei';
+    font-size: 70px;
+    /*font-weight: bold;*/
+    color: rgba(255, 158, 57, 0.75);
+    text-shadow: 0 0 10px rgba(255, 244, 95, 0.95);
+    letter-spacing : 10px;
+}
+
+.sign {
+    width: 240px;
+    height: 160px;
+    box-shadow: 0px 0px 12px rgba(0,255,255,0.85);
+    border: 1px solid rgba(127,255,255,0.65);
+    background-color: rgba(0,127,127, 0.65);
+    text-align: center;
+    display: table;
+}
+
+.sign span {
+    display: table-cell;
+    vertical-align: middle;
+    font-family: 'Microsoft YaHei';
     font-size: 60px;
     font-weight: bold;
     color: rgba(197, 255, 253, 0.75);

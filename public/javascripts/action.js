@@ -1,5 +1,6 @@
 var WAIT = 0;  //停止后空转多少圈
 var NAME;      //中奖的名字是全局变量
+var LUCKYTYPE;
 var LIST;      //中奖的列表
 var MAXSPEED = 0.2;
 var LOWSPEED = 0.04; //皆为正常值
@@ -14,6 +15,60 @@ var PROTECT = 0; //是否处在按键保护状态
 var CLICK; //按键时的音效
 var BG; //背景音效
 var RUN;//跳出数字时的音效
+var SIGN; //表示这个数组的意义
+
+var sign = function () {
+    var div = document.createElement('div');
+    div.className = "sign";
+
+    var span = document.createElement('span');
+    div.appendChild(span);
+
+    var sign = new THREE.CSS3DObject(div);
+    // 开头位置缓动效果初始位置
+    sign.hide = function () {
+        // 补间动画 位置
+        new TWEEN.Tween(sign.position)
+            .to({
+                x: 8000 * Math.random() - 4000,
+                y: 8000 * Math.random() - 4000,
+                z: 8000 * Math.random() - 4000
+            }, 2000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+        // 补间动画 角度
+        new TWEEN.Tween(sign.rotation)
+            .to({
+                x: 8 * Math.random() - 4,
+                y: 8 * Math.random() - 4,
+                z: 8 * Math.random() - 4
+            }, 2000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+    };
+    sign.appear = function () {
+        new TWEEN.Tween(sign.position)
+            .to({x: -700, y: 0, z: 300},
+            1000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+        // 开头角度缓动效果
+        new TWEEN.Tween(sign.rotation)
+            .to({x: 0, y: 0, z: 0},
+            1000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+    };
+    sign.position.x = 8000 * Math.random() - 4000;
+    sign.position.y = 8000 * Math.random() - 4000;
+    sign.position.z = 8000 * Math.random() - 4000;
+
+    // 开头角度缓动初始化
+    sign.rotation.x = 8 * Math.random() - 4;
+    sign.rotation.y = 8 * Math.random() - 4;
+    sign.rotation.z = 8 * Math.random() - 4;
+    return sign;
+};
 var backGround = function() {
     var div = document.createElement('div');
     div.className = "backGround";
@@ -67,6 +122,7 @@ var Reel = function() {
     this.minSpeed = MINSPEED;
     this.wait = WAIT;
     this.filter = 1;
+    this.FILTER = 1;
 
     for (var i = 0; i < 10; ++i) {
         var div = document.createElement('div');
@@ -197,6 +253,7 @@ var Reel = function() {
         for (var i = 0; i < 10; ++i, r -= Math.PI/5) {
             alpha = 0.4 + 0.5 * Math.cos(r);
             if(i != this.target) alpha *= this.filter;
+            alpha *= this.FILTER;
             this.obj.children[i].element.style.opacity = alpha.toString();
             this.obj.children[i].element.style.filter = 'alpha(opacity='+(alpha*100).toString()+')';
         }
@@ -244,15 +301,25 @@ var Reel = function() {
             //.easing(TWEEN.Easing.Exponential.InOut)
             .start();
     };
+    this.hiden = function () {
+        new TWEEN.Tween(this)
+            .to({FILTER: 0}, 500)
+            //.easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+    };
     this.appear = function() {
         new TWEEN.Tween(this)
-            .to({filter: 1}, 500)
+            .to({
+                filter: 1,
+                FILTER: 1
+            }, 500)
             //.easing(TWEEN.Easing.Exponential.InOut)
             .start();
     }
 };
 var reels = [];
 function refresh() {
+    SIGN.hide();
     reels.forEach(function (ele) {
         ele.omiga = 0;
         ele.beta  = 0;
@@ -354,20 +421,35 @@ function turnRight() {
     }, 1000);
 }
 
-function running() {
-    var res = false;
-    reels.forEach(function(ele) {
-        if(ele.running()) {
-            res = true;
-        }
-    });
-    return res;
-}
+//function running() {
+//    var res = false;
+//    reels.forEach(function(ele) {
+//        if(ele.running()) {
+//            res = true;
+//        }
+//    });
+//    return res;
+//}
 
 function stop(keyCode) {
     var luckyStar = getLuckyStar();
     NAME.innerHTML = luckyStar.name;
     luckyStar = luckyStar.id;
+    var resercher = false;
+    if(/^ *\d+ *$/.test(luckyStar[0])) {
+        resercher = false;
+        if(luckyStar[0] == '0') {
+            LUCKYTYPE = "教师";
+        }
+        else {
+            LUCKYTYPE = "本科";
+        }
+    } else {
+        resercher = true;
+        LUCKYTYPE = luckyStar.substr(0,2);
+        luckyStar = '0' + luckyStar.substr(2);
+    }
+    SIGN.element.children[0].textContent = LUCKYTYPE;
     LIST.innerHTML += luckyStar + ' ' + NAME.textContent + '<br>';
     var order;
     switch(keyCode) {
@@ -379,6 +461,10 @@ function stop(keyCode) {
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.play();
                         ele.hide();
+                        SIGN.appear();
+                        if(resercher) {
+                            reels[0].hiden();
+                        }
                         PROTECT = 0;
                     };
                     else ele.onStopped = function() {
@@ -406,6 +492,10 @@ function stop(keyCode) {
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.play();
                         ele.hide();
+                        SIGN.appear();
+                        if(resercher) {
+                            reels[0].hiden();
+                        }
                         PROTECT = 0;
                     };
                     else ele.onStopped = function () {
@@ -431,6 +521,10 @@ function stop(keyCode) {
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.play();
                         ele.hide();
+                        SIGN.appear();
+                        if(resercher) {
+                            reels[0].hiden();
+                        }
                         PROTECT = 0;
                     };
                     else ele.onStopped = function () {
@@ -452,12 +546,12 @@ function build() {
     PROTECT = 0;
 }
 
-function free() {
-    TWEEN.removeAll();
-    reels.forEach(function (ele) {
-        ele.free();
-    });
-}
+//function free() {
+//    TWEEN.removeAll();
+//    reels.forEach(function (ele) {
+//        ele.free();
+//    });
+//}
 
 var start = function() {
     BG = document.getElementById('bg');
@@ -475,6 +569,9 @@ var start = function() {
     scene.add(backGround());
     scene.add(luckyName());
     scene.add(resultBoard());
+    SIGN = sign();
+    scene.add(SIGN);
+    LIST.innerHTML = "<span>获奖名单</span>";
     var renderer = new THREE.CSS3DRenderer({
         antialias: true
     });
@@ -498,7 +595,6 @@ var start = function() {
         TWEEN.update();
         renderer.render(scene, camera);
     };
-    //refresh();
     render();
     window.onkeydown = function (event) {
         if(PROTECT)return;
