@@ -66,6 +66,7 @@ var Reel = function() {
     this.maxSpeed = MAXSPEED;
     this.minSpeed = MINSPEED;
     this.wait = WAIT;
+    this.filter = 1;
 
     for (var i = 0; i < 10; ++i) {
         var div = document.createElement('div');
@@ -192,6 +193,7 @@ var Reel = function() {
         var r = this.obj.rotation.x;
         for (var i = 0; i < 10; ++i, r -= Math.PI/5) {
             alpha = 0.4 + 0.5 * Math.cos(r);
+            if(i != this.target) alpha *= this.filter;
             this.obj.children[i].element.style.opacity = alpha.toString();
             this.obj.children[i].element.style.filter = 'alpha(opacity='+(alpha*100).toString()+')';
         }
@@ -232,6 +234,18 @@ var Reel = function() {
             this.onStopped();
             this.onStopped = undefined;
         }
+    };
+    this.hide = function() {
+        new TWEEN.Tween(this)
+            .to({filter: 0}, 500)
+            //.easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+    }
+    this.appear = function() {
+        new TWEEN.Tween(this)
+            .to({filter: 1}, 500)
+            //.easing(TWEEN.Easing.Exponential.InOut)
+            .start();
     }
 };
 var reels = [];
@@ -246,6 +260,7 @@ function refresh() {
         ele.wait = WAIT;
         ele.obj.rotation.x =
             (ele.obj.rotation.x % (2 * Math.PI) + Math.PI + Math.PI) % (2 * Math.PI);
+        ele.appear();
         new TWEEN.Tween(ele.obj.rotation)
             .to({x:0}, 1000)
             .easing(TWEEN.Easing.Exponential.InOut)
@@ -360,7 +375,11 @@ function stop(keyCode) {
                     ele.target = parseInt(luckyStar[index]);
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.play();
+                        ele.hide();
                         PROTECT = 0;
+                    };
+                    else ele.onStopped = function() {
+                        ele.hide();
                     };
                     if(order[index] == 6)  {
                         ele.wait = 0;
@@ -383,7 +402,11 @@ function stop(keyCode) {
                 setTimeout(function () {
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.play();
+                        ele.hide();
                         PROTECT = 0;
+                    };
+                    else ele.onStopped = function () {
+                        ele.hide();
                     };
                     ele.target = parseInt(luckyStar[index]);
                     ele.stopForce();
@@ -403,7 +426,12 @@ function stop(keyCode) {
                     ele.target = parseInt(luckyStar[index]);
                     //ele.minSpeed = MINSPEED - order[index]*0.005;
                     if(order[index] == 7) ele.onStopped = function () {
+                        RUN.play();
+                        ele.hide();
                         PROTECT = 0;
+                    };
+                    else ele.onStopped = function () {
+                        ele.hide();
                     };
                     if(order[index] == 7) ele.wait = 0;
                     ele.stop();
