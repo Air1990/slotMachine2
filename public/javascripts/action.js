@@ -1,5 +1,6 @@
 var WAIT = 0;  //停止后空转多少圈
 var NAME;      //中奖的名字是全局变量
+var LIST;      //中奖的列表
 var MAXSPEED = 0.2;
 var LOWSPEED = 0.6; //皆为正常值
 var MINSPEED = 0.08; //最终减速的阈值，越大则所用时间越多
@@ -7,12 +8,15 @@ var SPEED = 0.001;
 var FACTOR = 0.99;   //变成LOWSPEED的时间，越小越长
 var DEC = -0.01; //减速度
 var CONST = -0.05; //轮子停下的微调常量
-var board = function() {
+var CNT = 0; //按键次数
+var WATCH = 0; //是否在观看结果状态
+var PROTECT = 0; //是否处在按键保护状态
+var backGround = function() {
     var div = document.createElement('div');
-    div.className = "board";
-    var board = new THREE.CSS3DObject(div);
-    board.position.z = -500;
-    return board;
+    div.className = "backGround";
+    var backGround = new THREE.CSS3DObject(div);
+    backGround.position.z = -500;
+    return backGround;
 };
 var CAMERA;    //全局照相机
 var luckyName = function() {
@@ -26,10 +30,24 @@ var luckyName = function() {
 
     var name = new THREE.CSS3DObject(div);
 
-    name.position.z = 1700;
-    name.rotation.y = Math.PI;
+    //name.position.z = 1700;
+    //name.rotation.y = Math.PI;
+    name.position.x = 1000;
+    name.position.z = 1000;
+    name.rotation.y = 3 * Math.PI / 2 ;
     return name;
 
+};
+var resultBoard = function () {
+    var div = document.createElement('div');
+    div.className = "result";
+    LIST = document.createElement('p');
+    div.appendChild(LIST);
+
+    var resultBoard = new THREE.CSS3DObject(div);
+    resultBoard.position.z = 2000;
+    resultBoard.rotation.y = Math.PI;
+    return resultBoard;
 };
 var Reel = function() {
     var radius = 300;
@@ -137,7 +155,6 @@ var Reel = function() {
                     this.beta = - (this.omiga * this.omiga) /
                     (2 * this.wait * Math.PI +  phi + CONST) /
                     2;
-                    console.log(this.beta);
                 }
                 if(this.omiga < 0) {
                     this.obj.rotation.x = this.target * Math.PI / 5;
@@ -146,8 +163,8 @@ var Reel = function() {
                     this.status = undefined;
                     if(this.onStopped) {
                         this.onStopped();
+                        this.onStopped = undefined;
                     }
-                    this.onStopped = undefined;
                 }
             }
         }
@@ -232,24 +249,86 @@ function refresh() {
             .start();
         //ele.obj.rotation.x = 0;
     });
+    setTimeout(function() {
+        PROTECT = 0;
+    },1000);
 }
 
 function run() {
     reels.forEach(function (ele, index) {
         setTimeout(function () {
             ele.run();
+            if(index == 7)PROTECT = 0;
         },250*index);
     })
 }
 
-function turnAround() {
-    if(running())return ;
+function turnForward() {
+    CAMERA.rotation.y = - Math.PI;
+    new TWEEN.Tween(CAMERA.rotation)
+        .to({y: 0}, 1000)
+        .easing(TWEEN.Easing.Exponential.InOut)
+        .start();
+    if(CAMERA.position.z != 1000)
+        setTimeout(function() {
+            new TWEEN.Tween(CAMERA.position)
+                .to({z: 1000}, 1000)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            setTimeout(refresh,1000);
+        }, 1500);
+}
+
+function turnLeft() {
+    new TWEEN.Tween(CAMERA.position)
+        .to({x : 0}, 1000)
+        .easing(TWEEN.Easing.Exponential.InOut)
+        .start();
     setTimeout(function() {
         new TWEEN.Tween(CAMERA.rotation)
-            .to({y: Math.PI}, 1000)
+            .to({y: 0}, 1000)
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
-    }, 500);
+        setTimeout(refresh,1000);
+    }, 1000);
+}
+
+function turnBack() {
+    new TWEEN.Tween(CAMERA.position)
+        .to({x: 0}, 1000)
+        .easing(TWEEN.Easing.Exponential.InOut)
+        .start();
+    setTimeout(function() {
+        new TWEEN.Tween(CAMERA.rotation)
+            .to({y: -Math.PI}, 1000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+        setTimeout(function() {
+            new TWEEN.Tween(CAMERA.position)
+                .to({z: 1500}, 1000)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            setTimeout(function() {
+                PROTECT = 0;
+            }, 1000)
+        }, 1000);
+    }, 1000);
+}
+
+function turnRight() {
+    new TWEEN.Tween(CAMERA.rotation)
+        .to({y: - Math.PI  / 2}, 1000)
+        .easing(TWEEN.Easing.Exponential.InOut)
+        .start();
+    setTimeout(function() {
+        new TWEEN.Tween(CAMERA.position)
+            .to({x: 500}, 1000)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+        setTimeout(function () {
+            PROTECT = 0;
+        }, 1000);
+    }, 1000);
 }
 
 function running() {
@@ -266,30 +345,37 @@ function stop(keyCode) {
     var luckyStar = getLuckyStar();
     NAME.textContent = luckyStar.name;
     luckyStar = luckyStar.id;
+    LIST.textContent += luckyStar + ' ' + NAME.textContent + '\n';
     var order;
     switch(keyCode) {
-        case 13: //回车键
+        case 16: //shift键
             order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
-                    ele.onStopped = turnAround;
                     ele.minSpeed = MINSPEED - order[index]*0.005;
+                    if(order[index] == 7) ele.onStopped = function () {
+                        PROTECT = 0;
+                    };
                     if(order[index] == 6) ele.wait = 1;
                     if(order[index] == 7) ele.wait = 2;
                     ele.stop();
                 }, 1500 * order[index]);
             });
             break;
-        case 83: // S键
+        case 17: // ctrl键
             order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
+                    if(order[index] == 7) ele.onStopped = function () {
+                        PROTECT = 0;
+                    };
+                    ele.target = parseInt(luckyStar[index]);
                     ele.stopForce();
-                }, 1500 * order[index]);
+                }, 500 * order[index]);
             });
             break;
-        case 85: // U键
+        case 32: // 空格键
             order = [0,1,2,3,4,5,6,7];
             for(var i = 7 ; i > 0 ; --i) {
                 var j = parseInt(Math.random()*i);
@@ -300,8 +386,11 @@ function stop(keyCode) {
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
-                    ele.onStopped = turnAround;
                     ele.minSpeed = MINSPEED - order[index]*0.005;
+                    if(order[index] == 7) ele.onStopped = function () {
+                        console.log("No Protect");
+                        PROTECT = 0;
+                    };
                     if(order[index] == 7) ele.wait = 2;
                     ele.stop();
                 }, 1500 * order[index]);
@@ -315,6 +404,7 @@ function build() {
     reels.forEach(function (ele) {
         ele.build();
     });
+    PROTECT = 0;
 }
 
 function free() {
@@ -334,8 +424,9 @@ var start = function() {
         scene.add(reel.obj);
         reels.push(reel);
     }
-    scene.add(board());
+    scene.add(backGround());
     scene.add(luckyName());
+    scene.add(resultBoard());
     var renderer = new THREE.CSS3DRenderer({
         antialias: true
     });
@@ -362,39 +453,33 @@ var start = function() {
     //refresh();
     render();
     window.onkeydown = function (event) {
-        console.log(event.keyCode);
+        if(PROTECT)return;
+        PROTECT = 1;
         switch(event.keyCode) {
-            case 83://S键
-            case 85://U键
-            case 13://回车
-                if(!running())break;
-                stop(event.keyCode);
+            ///NEW
+            case 13:
+                switch (WATCH) {
+                    case 0 : turnBack();WATCH = 1;break;
+                    case 1 : turnForward();WATCH = 0;break;
+                }
+                break;
+            case 16:
+            case 32:
+            case 17:
+                ++CNT;
+                switch (CNT) {
+                    case 1:build();break;
+                    case 2:refresh();break;
+                    case 3:run();break;
+                    case 4:stop(event.keyCode);break;
+                    case 5:turnRight();break;
+                    case 6:turnLeft(); CNT = 2;break;
+                }
                 break;
             case 68:
                 localStorage.unlucky = "{}";
                 alert("已删除历史");
-                break;
-            case 32: //空格键
-                refresh();
-                break;
-            case 82: //R键
-                run();
-                break;
-            case 66: //B键
-                build();
-                break;
-            case 69: //E键
-                free();
-                break;
-            case 67: //C键
-                camera.rotation.y = - Math.PI;
-                new TWEEN.Tween(camera.rotation)
-                    .to({y: 0}, 1000)
-                    .easing(TWEEN.Easing.Exponential.InOut)
-                    .start();
-                setTimeout(function() {
-                    refresh();
-                },1000);
+                location.reload();
                 break;
         }
     };
