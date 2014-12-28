@@ -14,7 +14,8 @@ html
         script(type='text/javascript', src='/javascripts/action.js')
         script(type='text/javascript', src='/javascripts/slot.js')
         script(type='text/javascript', src='/javascripts/list.js')
+        audio#click(src="/audio/click.mp3")
+        audio#bg(src="/audio/bg.mp3",autoplay=true)
+        audio#run(src="/audio/run.mp3")
     body
-        p#log.
-            空格，Ctrl,Shift来操作。回车显示当前结果(刷新就会消失）。
         video(autoplay,loop,src="/video/bg.mp4")

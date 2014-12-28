@@ -11,6 +11,9 @@ var CONST = -0.05; //轮子停下的微调常量
 var CNT = 0; //按键次数
 var WATCH = 0; //是否在观看结果状态
 var PROTECT = 0; //是否处在按键保护状态
+var CLICK; //按键时的音效
+var BG; //背景音效
+var RUN;//跳出数字时的音效
 var backGround = function() {
     var div = document.createElement('div');
     div.className = "backGround";
@@ -278,7 +281,7 @@ function turnForward() {
             setTimeout(function () {
                 PROTECT = 0;
             },1000);
-        }, 1500);
+        }, 1000);
 }
 
 function turnLeft() {
@@ -356,6 +359,7 @@ function stop(keyCode) {
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
                     if(order[index] == 7) ele.onStopped = function () {
+                        RUN.play();
                         PROTECT = 0;
                     };
                     if(order[index] == 6)  {
@@ -378,6 +382,7 @@ function stop(keyCode) {
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
                     if(order[index] == 7) ele.onStopped = function () {
+                        RUN.play();
                         PROTECT = 0;
                     };
                     ele.target = parseInt(luckyStar[index]);
@@ -424,6 +429,9 @@ function free() {
 }
 
 var start = function() {
+    BG = document.getElementById('bg');
+    CLICK = document.getElementById('click');
+    RUN = document.getElementById('run');
     var scene = new THREE.Scene();
     for (var i = 0; i < 8; ++i) {
         var reel = new Reel();
@@ -463,6 +471,7 @@ var start = function() {
     render();
     window.onkeydown = function (event) {
         if(PROTECT)return;
+        CLICK.play();
         switch(event.keyCode) {
             ///NEW
             case 13:
