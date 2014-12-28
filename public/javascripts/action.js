@@ -5,7 +5,7 @@ var MAXSPEED = 0.2;
 var LOWSPEED = 0.04; //皆为正常值
 var MINSPEED = 0.06; //最终减速的阈值，越大则所用时间越少
 var SPEED = 0.001;
-var FACTOR = 0.99;   //变成LOWSPEED的时间，越小越长
+var FACTOR = 0.9;   //变成LOWSPEED的时间，越小越短
 var DEC = -0.01; //减速度
 var CONST = -0.05; //轮子停下的微调常量
 var CNT = 0; //按键次数
@@ -153,12 +153,15 @@ var Reel = function() {
                     this.omiga += this.beta;
                 }
                 else {
+
                     this.status = 4;
                     var phi = (this.target * Math.PI / 5 - this.obj.rotation.x);
                     if(phi < 0) phi += 2 * Math.PI;
+                    if((2 * this.wait * Math.PI +  phi + CONST) < Math.PI/180*10)phi += 2 * Math.PI;
                     this.beta = - (this.omiga * this.omiga) /
                     (2 * this.wait * Math.PI +  phi + CONST) /
                     2;
+                    console.log("最后的减速开始"+this.beta);
                 }
                 if(this.omiga < 0) {
                     this.obj.rotation.x = this.target * Math.PI / 5;
@@ -240,7 +243,7 @@ var Reel = function() {
             .to({filter: 0}, 500)
             //.easing(TWEEN.Easing.Exponential.InOut)
             .start();
-    }
+    };
     this.appear = function() {
         new TWEEN.Tween(this)
             .to({filter: 1}, 500)
@@ -499,11 +502,11 @@ var start = function() {
     render();
     window.onkeydown = function (event) {
         if(PROTECT)return;
-        CLICK.play();
         switch(event.keyCode) {
             ///NEW
             case 13:
                 PROTECT = 1;
+                CLICK.play();
                 switch (WATCH) {
                     case 0 : turnBack();WATCH = 1;break;
                     case 1 : turnForward();WATCH = 0;break;
@@ -512,7 +515,9 @@ var start = function() {
             case 16:
             case 32:
             case 17:
+                if(WATCH)break;
                 PROTECT = 1;
+                CLICK.play();
                 ++CNT;
                 switch (CNT) {
                     case 1:build();break;
