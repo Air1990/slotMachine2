@@ -13,12 +13,21 @@ function getLuckyStar() {
         luckyStar = luckyStar[0];
         ++try_cnt;
         if(try_cnt > 100000) {
-            console.log("Can not find lucky star!");
-			luckyStar = "00000000";
-            return {
-                id:luckyStar,
-                name:luckyName
-            };
+            for(var i = 0 ; i <= stars.length ; ++i) {
+                if(i == stars.length) {
+                    console.log("Can not find lucky star!");
+                    luckyStar = "00000000";
+                    luckyName = "按D重置";
+                    return {
+                        id:luckyStar,
+                        name:luckyName
+                    };
+                }
+                if(unlucky[stars[i][0]])continue;
+                luckyName = luckyStar[1];
+                luckyStar = luckyStar[0];
+                break;
+            }
         }
     }while(unlucky[luckyStar]);
     unlucky[luckyStar] = 1;

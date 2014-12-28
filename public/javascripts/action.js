@@ -1,5 +1,12 @@
-var WAIT = 10; //停止后空转多少圈，一定得是偶数
+var WAIT = 0;  //停止后空转多少圈
 var NAME;      //中奖的名字是全局变量
+var MAXSPEED = 0.2;
+var LOWSPEED = 0.6; //皆为正常值
+var MINSPEED = 0.08; //最终减速的阈值，越大则所用时间越多
+var SPEED = 0.001;
+var FACTOR = 0.99;   //变成LOWSPEED的时间，越小越长
+var DEC = -0.01; //减速度
+var CONST = -0.05; //轮子停下的微调常量
 var board = function() {
     var div = document.createElement('div');
     div.className = "board";
@@ -31,9 +38,13 @@ var Reel = function() {
 
     this.target = 0;   // 应当停下的位置
 
-    this.OMIGA = 0.20;      // 最高速
-    this.omiga = 0.001;         // 角速度
+    this.omiga = SPEED;         // 角速度(每一帧移动的角向量)
     this.beta  = 0;    // 角加速度
+    this.factor = FACTOR;
+    this.lowSpeed = LOWSPEED;
+    this.maxSpeed = MAXSPEED;
+    this.minSpeed = MINSPEED;
+    this.wait = WAIT;
 
     for (var i = 0; i < 10; ++i) {
         var div = document.createElement('div');
@@ -108,23 +119,39 @@ var Reel = function() {
     };
 
     this.update = function() {
-        if(this.omiga + this.beta > this.OMIGA) {
-            this.omiga = this.OMIGA;
-            if(this.onMaxSpeed) {
-                this.onMaxSpeed();
-                this.onMaxSpeed = undefined;
+        if(this.beta < 0) { //减速状态
+            if(this.omiga > this.lowSpeed) { //匀减速
+                this.omiga += this.beta;
+            } else
+            if(this.omiga <= this.lowSpeed && this.omiga > this.minSpeed) { //指数形式减速
+                this.omiga = this.omiga * this.factor;
+            } else
+            if(this.omiga <= this.minSpeed) { //匀减速
+                if(this.status == 4) {
+                    this.omiga += this.beta;
+                }
+                else {
+                    this.status = 4;
+                    var phi = (this.target * Math.PI / 5 - this.obj.rotation.x);
+                    if(phi < 0) phi += 2 * Math.PI;
+                    this.beta = - (this.omiga * this.omiga) /
+                    (2 * this.wait * Math.PI +  phi + CONST) /
+                    2;
+                    console.log(this.beta);
+                }
+                if(this.omiga < 0) {
+                    this.obj.rotation.x = this.target * Math.PI / 5;
+                    this.omiga = 0;
+                    this.beta = 0;
+                    this.status = undefined;
+                    if(this.onStopped) {
+                        this.onStopped();
+                    }
+                    this.onStopped = undefined;
+                }
             }
         }
-        else
-        if(this.running() && (this.omiga + this.beta) * this.omiga <= 0) {
-            this.omiga = 0;
-            this.beta = 0;
-            if(this.onStopped) {
-                this.onStopped();
-                this.onStopped = undefined;
-            }
-        }
-        else {
+        else if(this.beta > 0) {
             if(!this.running()) {
                 if(this.onStart) {
                     this.onStart();
@@ -132,9 +159,16 @@ var Reel = function() {
                 }
             }
             this.omiga += this.beta;
+            if(this.omiga >= this.maxSpeed) {
+                this.omiga = this.maxSpeed;
+            }
         }
+
+
         var alpha = 0;
         this.obj.rotation.x += this.omiga;
+        this.obj.rotation.x %= Math.PI*2;
+        if(this.obj.rotation.x < 0) this.obj.rotation.x += Math.PI*2;
         var r = this.obj.rotation.x;
         for (var i = 0; i < 10; ++i, r -= Math.PI/5) {
             alpha = 0.4 + 0.5 * Math.cos(r);
@@ -144,7 +178,7 @@ var Reel = function() {
     };
 
     this.run = function () {
-        this.OMIGA = 0.20;
+        this.maxSpeed = MAXSPEED;
         this.omiga = 0;
         this.beta  = 0.0025;
     };
@@ -152,7 +186,7 @@ var Reel = function() {
     this.vibration = function () {
         var count = 0;
         var limit = 10; //one second
-        var maxDelta = Math.PI/180*5; //上下动5度
+        var maxDelta = Math.PI/180*10; //上下动5度
         var dist1 = function(x) {return maxDelta-(maxDelta/limit)*x;};
         var dist2 = function(x) {return Math.sin(x);};
         var target = this.target;
@@ -167,9 +201,7 @@ var Reel = function() {
     };
 
     this.stop = function() {
-        var phi = this.target * Math.PI / 5;
-        this.beta = - (this.omiga * this.omiga) /
-        (2 * WAIT * Math.PI + 2 * (phi - (this.obj.rotation.x-0.11) % (2 * Math.PI)));
+        this.beta = DEC;
     };
     this.stopForce = function () {
         this.obj.rotation.x = this.target * (Math.PI/5);
@@ -187,6 +219,11 @@ function refresh() {
     reels.forEach(function (ele) {
         ele.omiga = 0;
         ele.beta  = 0;
+        ele.lowSpeed = LOWSPEED;
+        ele.maxSpeed = MAXSPEED;
+        ele.minSpeed = MINSPEED;
+        ele.factor = FACTOR;
+        ele.wait = WAIT;
         ele.obj.rotation.x =
             (ele.obj.rotation.x % (2 * Math.PI) + Math.PI + Math.PI) % (2 * Math.PI);
         new TWEEN.Tween(ele.obj.rotation)
@@ -206,6 +243,7 @@ function run() {
 }
 
 function turnAround() {
+    if(running())return ;
     setTimeout(function() {
         new TWEEN.Tween(CAMERA.rotation)
             .to({y: Math.PI}, 1000)
@@ -214,38 +252,44 @@ function turnAround() {
     }, 500);
 }
 
+function running() {
+    var res = false;
+    reels.forEach(function(ele) {
+        if(ele.running()) {
+            res = true;
+        }
+    });
+    return res;
+}
+
 function stop(keyCode) {
     var luckyStar = getLuckyStar();
     NAME.textContent = luckyStar.name;
     luckyStar = luckyStar.id;
     var order;
     switch(keyCode) {
-        case 13:
+        case 13: //回车键
             order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
-                if(order[index] == 7) {
-                    ele.onStopped = turnAround;
-                }
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
+                    ele.onStopped = turnAround;
+                    ele.minSpeed = MINSPEED - order[index]*0.005;
+                    if(order[index] == 6) ele.wait = 1;
+                    if(order[index] == 7) ele.wait = 2;
                     ele.stop();
                 }, 1500 * order[index]);
             });
             break;
-        case 83:
+        case 83: // S键
             order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
-                if(order[index] == 7) {
-                    console.log(index);
-                    ele.onStopped = turnAround;
-                }
                 setTimeout(function () {
-                    ele.target = parseInt(luckyStar[index]);
                     ele.stopForce();
-                }, 500 * order[index]);
+                }, 1500 * order[index]);
             });
             break;
-        case 85:
+        case 85: // U键
             order = [0,1,2,3,4,5,6,7];
             for(var i = 7 ; i > 0 ; --i) {
                 var j = parseInt(Math.random()*i);
@@ -254,11 +298,11 @@ function stop(keyCode) {
                 order[j] = k;
             }
             reels.forEach(function (ele, index) {
-                if(order[index] == 7) {
-                    ele.onStopped = turnAround;
-                }
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
+                    ele.onStopped = turnAround;
+                    ele.minSpeed = MINSPEED - order[index]*0.005;
+                    if(order[index] == 7) ele.wait = 2;
                     ele.stop();
                 }, 1500 * order[index]);
             });
@@ -323,11 +367,12 @@ var start = function() {
             case 83://S键
             case 85://U键
             case 13://回车
+                if(!running())break;
                 stop(event.keyCode);
                 break;
             case 68:
                 localStorage.unlucky = "{}";
-                alert("重置成功");
+                alert("已删除历史");
                 break;
             case 32: //空格键
                 refresh();
@@ -347,6 +392,9 @@ var start = function() {
                     .to({y: 0}, 1000)
                     .easing(TWEEN.Easing.Exponential.InOut)
                     .start();
+                setTimeout(function() {
+                    refresh();
+                },1000);
                 break;
         }
     };
