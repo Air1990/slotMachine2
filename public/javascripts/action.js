@@ -343,9 +343,9 @@ function running() {
 
 function stop(keyCode) {
     var luckyStar = getLuckyStar();
-    NAME.textContent = luckyStar.name;
+    NAME.innerHTML = luckyStar.name;
     luckyStar = luckyStar.id;
-    LIST.textContent += luckyStar + ' ' + NAME.textContent + '\n';
+    LIST.innerHTML += luckyStar + ' ' + NAME.textContent + '<br>';
     var order;
     switch(keyCode) {
         case 16: //shift键
@@ -454,10 +454,10 @@ var start = function() {
     render();
     window.onkeydown = function (event) {
         if(PROTECT)return;
-        PROTECT = 1;
         switch(event.keyCode) {
             ///NEW
             case 13:
+                PROTECT = 1;
                 switch (WATCH) {
                     case 0 : turnBack();WATCH = 1;break;
                     case 1 : turnForward();WATCH = 0;break;
@@ -466,6 +466,7 @@ var start = function() {
             case 16:
             case 32:
             case 17:
+                PROTECT = 1;
                 ++CNT;
                 switch (CNT) {
                     case 1:build();break;

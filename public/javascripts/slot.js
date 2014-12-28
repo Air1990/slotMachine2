@@ -2,6 +2,18 @@
  * Created by 明阳 on 2014/12/22.
  */
 localStorage.unlucky = localStorage.unlucky || "{}";
+function DataLength(fData)
+{
+    var intLength=0
+    for (var i=0;i<fData.length;i++)
+    {
+        if ((fData.charCodeAt(i) < 0) || (fData.charCodeAt(i) > 255))
+            intLength=intLength+2
+        else
+            intLength=intLength+1
+    }
+    return intLength
+}
 function getLuckyStar() {
     var unlucky = JSON.parse(localStorage.unlucky);
     var try_cnt = 0;
@@ -32,6 +44,9 @@ function getLuckyStar() {
     }while(unlucky[luckyStar]);
     unlucky[luckyStar] = 1;
     localStorage.unlucky = JSON.stringify(unlucky);
+    if(luckyName.length == 2) {
+        luckyName = luckyName[0] + "&nbsp&nbsp"+ luckyName[1];
+    }
     return {
         id:luckyStar,
         name:luckyName
