@@ -2,8 +2,8 @@ var WAIT = 0;  //停止后空转多少圈
 var NAME;      //中奖的名字是全局变量
 var LIST;      //中奖的列表
 var MAXSPEED = 0.2;
-var LOWSPEED = 0.6; //皆为正常值
-var MINSPEED = 0.08; //最终减速的阈值，越大则所用时间越多
+var LOWSPEED = 0.04; //皆为正常值
+var MINSPEED = 0.06; //最终减速的阈值，越大则所用时间越少
 var SPEED = 0.001;
 var FACTOR = 0.99;   //变成LOWSPEED的时间，越小越长
 var DEC = -0.01; //减速度
@@ -355,14 +355,22 @@ function stop(keyCode) {
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
-                    ele.minSpeed = MINSPEED - order[index]*0.005;
                     if(order[index] == 7) ele.onStopped = function () {
                         PROTECT = 0;
                     };
-                    if(order[index] == 6) ele.wait = 1;
-                    if(order[index] == 7) ele.wait = 2;
-                    ele.stop();
-                }, 1500 * order[index]);
+                    if(order[index] == 6)  {
+                        ele.wait = 0;
+                        ele.stop();
+                    }
+                    else
+                    if(order[index] == 7)  {
+                        ele.wait = 0;
+                        ele.stop();
+                    }
+                    else {
+                        ele.stopForce();
+                    }
+                }, 500 * order[index]);
             });
             break;
         case 17: // ctrl键
@@ -388,14 +396,13 @@ function stop(keyCode) {
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
-                    ele.minSpeed = MINSPEED - order[index]*0.005;
+                    //ele.minSpeed = MINSPEED - order[index]*0.005;
                     if(order[index] == 7) ele.onStopped = function () {
-                        console.log("No Protect");
                         PROTECT = 0;
                     };
-                    if(order[index] == 7) ele.wait = 2;
+                    if(order[index] == 7) ele.wait = 0;
                     ele.stop();
-                }, 1500 * order[index]);
+                }, 1000 * order[index]);
             });
             break;
     }
