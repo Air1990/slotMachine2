@@ -15,8 +15,10 @@ var WATCH = 0; //是否在观看结果状态
 var PROTECT = 0; //是否处在按键保护状态
 var CLICK; //按键时的音效
 var BG; //背景音效
-var RUN;//跳出数字时的音效
+var GOT;//跳出数字时的音效
 var SIGN; //表示这个数组的意义
+var RUN;
+var VEDIO; //背景星空
 
 var sign = function () {
     var div = document.createElement('div');
@@ -48,6 +50,7 @@ var sign = function () {
             .start();
     };
     sign.appear = function () {
+        if(running())return ;
         new TWEEN.Tween(sign.position)
             .to({x: -700, y: 0, z: 300},
             1000)
@@ -60,9 +63,9 @@ var sign = function () {
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
     };
-    sign.position.x = 8000 * Math.random() - 4000;
-    sign.position.y = 8000 * Math.random() - 4000;
-    sign.position.z = 8000 * Math.random() - 4000;
+    sign.position.x = (1000 * Math.random() + 2000) * (parseInt(Math.random()) ==0?1:-1);
+    sign.position.y = (1000 * Math.random() + 2000) * (parseInt(Math.random()) ==0?1:-1);
+    sign.position.z = (1000 * Math.random() + 2000) * (parseInt(Math.random()) ==0?1:-1);
 
     // 开头角度缓动初始化
     sign.rotation.x = 8 * Math.random() - 4;
@@ -321,6 +324,10 @@ var Reel = function() {
 var reels = [];
 function refresh() {
     SIGN.hide();
+    BG.load();
+    BG.play();
+    GOT.pause();
+    RUN.pause();
     reels.forEach(function (ele) {
         ele.omiga = 0;
         ele.beta  = 0;
@@ -344,6 +351,12 @@ function refresh() {
 }
 
 function run() {
+    BG.pause();
+    GOT.pause();
+    RUN.load();
+    RUN.play();
+    VIDEO.defaultPlaybackRate = 3.0;
+    VIDEO.load();
     reels.forEach(function (ele, index) {
         setTimeout(function () {
             ele.run();
@@ -371,10 +384,12 @@ function turnForward() {
 }
 
 function turnLeft() {
+    if(CAMERA.position.x != 0)
     new TWEEN.Tween(CAMERA.position)
         .to({x : 0}, 1000)
         .easing(TWEEN.Easing.Exponential.InOut)
         .start();
+    if(CAMERA.rotation.y != 0)
     setTimeout(function() {
         new TWEEN.Tween(CAMERA.rotation)
             .to({y: 0}, 1000)
@@ -382,6 +397,7 @@ function turnLeft() {
             .start();
         setTimeout(refresh,1000);
     }, 1000);
+    else refresh();
 }
 
 function turnBack() {
@@ -422,17 +438,19 @@ function turnRight() {
     }, 1000);
 }
 
-//function running() {
-//    var res = false;
-//    reels.forEach(function(ele) {
-//        if(ele.running()) {
-//            res = true;
-//        }
-//    });
-//    return res;
-//}
+function running() {
+    var res = false;
+    reels.forEach(function(ele) {
+        if(ele.running()) {
+            res = true;
+        }
+    });
+    return res;
+}
 
 function stop(keyCode) {
+    VIDEO.defaultPlaybackRate = 1.0;
+    VIDEO.load();
     var luckyStar = getLuckyStar();
     if(keyCode == 83) {
         luckyStar =  {
@@ -440,6 +458,7 @@ function stop(keyCode) {
             name:"宋友"
         };
     }
+    var backup = luckyStar;
     NAME.innerHTML = luckyStar.name;
     luckyStar = luckyStar.id;
     var resercher = false;
@@ -447,7 +466,7 @@ function stop(keyCode) {
         resercher = false;
         if(luckyStar[0] == '0') {
             LUCKYTYPE = "教师";
-            NAME.innerHTML += "<br>老师";
+            NAME.innerHTML += "<br>教授";
         }
         else {
             LUCKYTYPE = "本科";
@@ -458,7 +477,7 @@ function stop(keyCode) {
         luckyStar = '0' + luckyStar.substr(2);
     }
     SIGN.element.children[0].textContent = LUCKYTYPE;
-    LIST.push(luckyStar + ' ' + NAME.textContent);
+    LIST.push(backup.id + ' ' + backup.name);
     LUCKYLIST.innerHTML = "<span>获奖名单</span>" + LIST.join('<br>');
     var order;
     switch(keyCode) {
@@ -469,7 +488,10 @@ function stop(keyCode) {
                 setTimeout(function () {
                     ele.target = parseInt(luckyStar[index]);
                     if(order[index] == 7) ele.onStopped = function () {
-                        RUN.play();
+                        RUN.pause();
+                        BG.pause();
+                        GOT.load();
+                        GOT.play();
                         ele.hide();
                         SIGN.appear();
                         if(resercher) {
@@ -479,6 +501,7 @@ function stop(keyCode) {
                     };
                     else ele.onStopped = function() {
                         ele.hide();
+                        SIGN.appear();
                     };
                     if(order[index] == 6)  {
                         ele.wait = 0;
@@ -500,7 +523,10 @@ function stop(keyCode) {
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
                     if(order[index] == 7) ele.onStopped = function () {
-                        RUN.play();
+                        RUN.pause();
+                        BG.pause();
+                        GOT.load();
+                        GOT.play();
                         ele.hide();
                         SIGN.appear();
                         if(resercher) {
@@ -509,6 +535,7 @@ function stop(keyCode) {
                         PROTECT = 0;
                     };
                     else ele.onStopped = function () {
+                        SIGN.appear();
                         ele.hide();
                     };
                     ele.target = parseInt(luckyStar[index]);
@@ -529,7 +556,10 @@ function stop(keyCode) {
                     ele.target = parseInt(luckyStar[index]);
                     //ele.minSpeed = MINSPEED - order[index]*0.005;
                     if(order[index] == 7) ele.onStopped = function () {
-                        RUN.play();
+                        RUN.pause();
+                        BG.pause();
+                        GOT.load();
+                        GOT.play();
                         ele.hide();
                         SIGN.appear();
                         if(resercher) {
@@ -538,6 +568,7 @@ function stop(keyCode) {
                         PROTECT = 0;
                     };
                     else ele.onStopped = function () {
+                        SIGN.appear();
                         ele.hide();
                     };
                     if(order[index] == 7) ele.wait = 0;
@@ -571,7 +602,9 @@ function undo() {
 var start = function() {
     BG = document.getElementById('bg');
     CLICK = document.getElementById('click');
+    GOT = document.getElementById('got');
     RUN = document.getElementById('run');
+    VIDEO = document.getElementById('video');
     var scene = new THREE.Scene();
     for (var i = 0; i < 8; ++i) {
         var reel = new Reel();
@@ -620,6 +653,7 @@ var start = function() {
                 break;
             case 13:
                 PROTECT = 1;
+                CLICK.load();
                 CLICK.play();
                 switch (WATCH) {
                     case 0 : turnBack();WATCH = 1;break;
@@ -632,6 +666,7 @@ var start = function() {
             case 83:
                 if(WATCH)break;
                 PROTECT = 1;
+                CLICK.load();
                 CLICK.play();
                 ++CNT;
                 switch (CNT) {
