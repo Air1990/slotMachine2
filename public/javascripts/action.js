@@ -20,7 +20,7 @@ var BG; //背景音效
 var GOT;//跳出数字时的音效
 var SIGN; //表示这个数组的意义
 var RUN;
-var VEDIO; //背景星空
+var VIDEO; //背景星空
 var LUCKTYPE; //中奖人的类型 0 表示本科生 1非本科生
 var LUCKERTYPE; //中奖人的类型，中文
 var LUCKYSTAR;
