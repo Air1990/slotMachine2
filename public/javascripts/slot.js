@@ -1,5 +1,5 @@
 /**
- * Created by 明阳 on 2014/12/22.
+ * Created by 明阳 on 2014/12/27.
  */
 localStorage.unlucky = localStorage.unlucky || "{}";
 function DataLength(fData)

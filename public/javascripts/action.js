@@ -1,6 +1,8 @@
+/**
+ * Created by 明阳 on 2014/12/27.
+ */
 var WAIT = 0;  //停止后空转多少圈
 var NAME;      //中奖的名字是全局变量
-var LUCKYTYPE;
 var LIST = [];
 var LUCKYLIST;      //中奖的列表
 var MAXSPEED = 0.2;
@@ -19,7 +21,10 @@ var GOT;//跳出数字时的音效
 var SIGN; //表示这个数组的意义
 var RUN;
 var VEDIO; //背景星空
-
+var LUCKTYPE; //中奖人的类型 0 表示本科生 1非本科生
+var LUCKERTYPE; //中奖人的类型，中文
+var LUCKYSTAR;
+var FREE = false;
 var sign = function () {
     var div = document.createElement('div');
     div.className = "sign";
@@ -35,7 +40,7 @@ var sign = function () {
             .to({
                 x: 8000 * Math.random() - 4000,
                 y: 8000 * Math.random() - 4000,
-                z: 8000 * Math.random() - 4000
+                z: 8000 * Math.random() + 4000
             }, 2000)
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
@@ -49,19 +54,40 @@ var sign = function () {
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
     };
-    sign.appear = function () {
+    sign.appear = function (type) {
         if(running())return ;
-        new TWEEN.Tween(sign.position)
-            .to({x: -700, y: 0, z: 300},
-            1000)
-            .easing(TWEEN.Easing.Exponential.InOut)
-            .start();
-        // 开头角度缓动效果
-        new TWEEN.Tween(sign.rotation)
-            .to({x: 0, y: 0, z: 0},
-            1000)
-            .easing(TWEEN.Easing.Exponential.InOut)
-            .start();
+        if(type == 0) {
+            new TWEEN.Tween(sign.position)
+                .to({x: 0, y: 200, z: 300},
+                1000)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            // 开头角度缓动效果
+            new TWEEN.Tween(sign.rotation)
+                .to({x: 0, y: 0, z: 0},
+                1000)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+        } else {
+            new TWEEN.Tween(sign.position)
+                .to({x: -700, y: 0, z: 300},
+                500)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            // 开头角度缓动效果
+            new TWEEN.Tween(sign.rotation)
+                .to({x: 0, y: 0, z: 0},
+                500)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .start();
+            setTimeout(function () {
+                new TWEEN.Tween(sign.position)
+                    .to({x: -700+140, y: 0},
+                    500)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
+            },500);
+        }
     };
     sign.position.x = (1000 * Math.random() + 2000) * (parseInt(Math.random()) ==0?1:-1);
     sign.position.y = (1000 * Math.random() + 2000) * (parseInt(Math.random()) ==0?1:-1);
@@ -213,7 +239,6 @@ var Reel = function() {
                     this.omiga += this.beta;
                 }
                 else {
-
                     this.status = 4;
                     var phi = (this.target * Math.PI / 5 - this.obj.rotation.x);
                     if(phi < 0) phi += 2 * Math.PI;
@@ -221,7 +246,7 @@ var Reel = function() {
                     this.beta = - (this.omiga * this.omiga) /
                     (2 * this.wait * Math.PI +  phi + CONST) /
                     2;
-                    console.log("最后的减速开始"+this.beta);
+                    console.log("最后的减速"+this.beta);
                 }
                 if(this.omiga < 0) {
                     this.obj.rotation.x = this.target * Math.PI / 5;
@@ -355,8 +380,6 @@ function run() {
     GOT.pause();
     RUN.load();
     RUN.play();
-    VIDEO.defaultPlaybackRate = 3.0;
-    VIDEO.load();
     reels.forEach(function (ele, index) {
         setTimeout(function () {
             ele.run();
@@ -449,34 +472,25 @@ function running() {
 }
 
 function stop(keyCode) {
-    VIDEO.defaultPlaybackRate = 1.0;
-    VIDEO.load();
-    var luckyStar = getLuckyStar();
-    if(keyCode == 83) {
-        luckyStar =  {
-            id:"00000005",
-            name:"宋友"
-        };
-    }
-    var backup = luckyStar;
-    NAME.innerHTML = luckyStar.name;
-    luckyStar = luckyStar.id;
-    var resercher = false;
-    if(/^ *\d+ *$/.test(luckyStar[0])) {
-        resercher = false;
-        if(luckyStar[0] == '0') {
-            LUCKYTYPE = "教师";
+    LUCKYSTAR = getLuckyStar();
+    var backup = LUCKYSTAR;
+    NAME.innerHTML = LUCKYSTAR.name;
+    LUCKYSTAR = LUCKYSTAR.id;
+    if(/^ *\d+ *$/.test(LUCKYSTAR[0])) {
+        LUCKTYPE = 0;
+        if(LUCKYSTAR[0] == '0') {
+            LUCKERTYPE = "教师";
             NAME.innerHTML += "<br>教授";
         }
         else {
-            LUCKYTYPE = "本科";
+            LUCKERTYPE = "本科";
         }
     } else {
-        resercher = true;
-        LUCKYTYPE = luckyStar.substr(0,2);
-        luckyStar = '0' + luckyStar.substr(2);
+        LUCKTYPE = 1;
+        LUCKERTYPE = LUCKYSTAR.substr(0,2);
+        LUCKYSTAR = '0' + LUCKYSTAR.substr(2);
     }
-    SIGN.element.children[0].textContent = LUCKYTYPE;
+    SIGN.element.children[0].textContent = LUCKERTYPE;
     LIST.push(backup.id + ' ' + backup.name);
     LUCKYLIST.innerHTML = "<span>获奖名单</span>" + LIST.join('<br>');
     var order;
@@ -486,22 +500,22 @@ function stop(keyCode) {
             order = [0,1,2,3,4,5,6,7];
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
-                    ele.target = parseInt(luckyStar[index]);
+                    ele.target = parseInt(LUCKYSTAR[index]);
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.pause();
                         BG.pause();
                         GOT.load();
                         GOT.play();
                         ele.hide();
-                        SIGN.appear();
-                        if(resercher) {
+                        SIGN.appear(LUCKTYPE);
+                        if(LUCKTYPE == 1) {
                             reels[0].hiden();
                         }
                         PROTECT = 0;
                     };
                     else ele.onStopped = function() {
                         ele.hide();
-                        SIGN.appear();
+                        SIGN.appear(LUCKTYPE);
                     };
                     if(order[index] == 6)  {
                         ele.wait = 0;
@@ -528,17 +542,17 @@ function stop(keyCode) {
                         GOT.load();
                         GOT.play();
                         ele.hide();
-                        SIGN.appear();
-                        if(resercher) {
+                        SIGN.appear(LUCKTYPE);
+                        if(LUCKTYPE == 1) {
                             reels[0].hiden();
                         }
                         PROTECT = 0;
                     };
                     else ele.onStopped = function () {
-                        SIGN.appear();
+                        SIGN.appear(LUCKTYPE);
                         ele.hide();
                     };
-                    ele.target = parseInt(luckyStar[index]);
+                    ele.target = parseInt(LUCKYSTAR[index]);
                     ele.stopForce();
                 }, 500 * order[index]);
             });
@@ -553,7 +567,7 @@ function stop(keyCode) {
             }
             reels.forEach(function (ele, index) {
                 setTimeout(function () {
-                    ele.target = parseInt(luckyStar[index]);
+                    ele.target = parseInt(LUCKYSTAR[index]);
                     //ele.minSpeed = MINSPEED - order[index]*0.005;
                     if(order[index] == 7) ele.onStopped = function () {
                         RUN.pause();
@@ -561,14 +575,14 @@ function stop(keyCode) {
                         GOT.load();
                         GOT.play();
                         ele.hide();
-                        SIGN.appear();
-                        if(resercher) {
+                        SIGN.appear(LUCKTYPE);
+                        if(LUCKTYPE == 1) {
                             reels[0].hiden();
                         }
                         PROTECT = 0;
                     };
                     else ele.onStopped = function () {
-                        SIGN.appear();
+                        SIGN.appear(LUCKTYPE);
                         ele.hide();
                     };
                     if(order[index] == 7) ele.wait = 0;
@@ -592,12 +606,12 @@ function undo() {
     LUCKYLIST.innerHTML = "<span>获奖名单</span>" + LIST.join('<br>');
 }
 
-//function free() {
-//    TWEEN.removeAll();
-//    reels.forEach(function (ele) {
-//        ele.free();
-//    });
-//}
+function free() {
+    TWEEN.removeAll();
+    reels.forEach(function (ele) {
+        ele.free();
+    });
+}
 
 var start = function() {
     BG = document.getElementById('bg');
@@ -645,9 +659,41 @@ var start = function() {
     render();
     window.onkeydown = function (event) {
         console.log(event.keyCode);
+        if(event.keyCode == 80) {
+            reels.forEach(function(ele,index) {
+                ele.target = parseInt(LUCKYSTAR[index]);
+                if(index == 7) ele.onStopped = function () {
+                    RUN.pause();
+                    BG.pause();
+                    GOT.load();
+                    GOT.play();
+                    ele.hide();
+                    SIGN.appear(LUCKTYPE);
+                    if(LUCKTYPE == 1) {
+                        reels[0].hiden();
+                    }
+                    PROTECT = 0;
+                };
+                else ele.onStopped = function () {
+                    SIGN.appear(LUCKTYPE);
+                    ele.hide();
+                };
+                ele.stopForce();
+            });
+            PROTECT = 0;
+            return ;
+        }
         if(PROTECT)return;
         switch(event.keyCode) {
-            ///NEW
+            case 70:
+                if(FREE) {
+                    build();
+                    FREE = false;
+                } else {
+                    free();
+                    FREE = true;
+                }
+                break;
             case 85:
                 undo();
                 break;
