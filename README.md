@@ -51,4 +51,4 @@ npm start
 
 然后访问`http://127.0.0.1:3002`
 
-其他的和本地版本一样，在线版本已经搭载到了我的个人网站上，欢迎访问slot.wannakissyou.com
+其他的和本地版本一样，在线版本已经搭载到了我的个人网站上，欢迎访问http://slot.wannakissyou.com
